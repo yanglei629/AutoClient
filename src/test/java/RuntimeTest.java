@@ -19,7 +19,7 @@ public class RuntimeTest {
         Runtime runtime = Runtime.getRuntime();
         runtime.exec("taskkill /F /IM javaw.exe");
         Thread.sleep(3000);
-        ProcessBuilder processBuilder = new ProcessBuilder("C:\\Users\\allen\\Desktop\\EAP Client\\EAP Client.exe");
+        ProcessBuilder processBuilder = new ProcessBuilder("C:\\Users\\allen\\Desktop\\EAP application.Client\\EAP application.Client.exe");
         processBuilder.start();
     }
 

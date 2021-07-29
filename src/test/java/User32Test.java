@@ -5,10 +5,10 @@ import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.WinUser;
 import org.junit.Test;
+import utils.Kernel32;
+import utils.User32;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 public class User32Test {
     @Test
@@ -27,7 +27,7 @@ public class User32Test {
         System.out.println(byWare);
         User32.INSTANCE.ShowWindow(byWare, WinUser.SW_RESTORE);
         User32.INSTANCE.SetForegroundWindow(byWare);
-        //User32.INSTANCE.CloseWindow(byWare);
+        //utils.User32.INSTANCE.CloseWindow(byWare);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class User32Test {
     @Test
     public void processBuilder() throws IOException {
         //启动程序
-        ProcessBuilder processBuilder = new ProcessBuilder("C:\\Users\\allen\\Desktop\\EAP Client\\EAP Client.exe");
+        ProcessBuilder processBuilder = new ProcessBuilder("C:\\Users\\allen\\Desktop\\EAP application.Client\\EAP application.Client.exe");
         processBuilder.start();
     }
 
