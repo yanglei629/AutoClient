@@ -18,7 +18,8 @@ public class Panel extends JPanel {
 
     private JButton button = new JButton("更新程序");
     private JButton button2 = new JButton("中止程序");
-    private JLabel label = new JLabel("version:7.13.1");
+    private JLabel label = new JLabel("version:7.30.1");
+    private JLabel label2 = new JLabel("本机ip:" + Main.IP);
 
     public Panel() {
         //setLayout(new BorderLayout());
@@ -55,5 +56,7 @@ public class Panel extends JPanel {
         add(button2);
 
         add(label);
+
+        add(label2);
     }
 }
