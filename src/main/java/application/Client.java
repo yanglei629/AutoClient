@@ -7,6 +7,8 @@ import utils.RuntimeUtil;
 import utils.User32;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 
 public class Client {
     public static final Logger logger = LogManager.getLogger(Client.class);
@@ -35,11 +37,35 @@ public class Client {
         if (!start) {
             return "Failed";
         }
-        if (User32.INSTANCE.FindWindow(null, "EAP application.Client") != null) {
+        if (User32.INSTANCE.FindWindow(null, "EAP Client") != null) {
             logger.info("Boot Program Success");
             return "Success";
         }
         return "Failed";
+    }
+
+    //删除文件
+    public static boolean delete(String path) {
+        FileUtil.deleteFileOrDirectory(path);
+        return true;
+    }
+
+    //执行脚本
+    public static boolean executeScript(String path) {
+        RuntimeUtil.executeScript(path);
+        return true;
+    }
+
+
+    //上传文件
+    public static boolean upload() {
+        File file = new File("");
+        try {
+            FileOutputStream os = new FileOutputStream(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return true;
     }
 
     //更新
@@ -50,12 +76,17 @@ public class Client {
         try {
             //结束进程
             logger.info("Kill Process");
-            if (User32.INSTANCE.FindWindow(null, "EAP application.Client") != null) {
+            if (User32.INSTANCE.FindWindow(null, "EAP Client") != null) {
                 boolean kill = RuntimeUtil.killProcess("\"EAP Client\"");
                 if (!kill) {
                     return false;
                 }
             }
+
+            if (User32.INSTANCE.FindWindow(null, "EAP Client") != null) {
+                return false;
+            }
+
             logger.info("Kill Process Success");
             //删除旧程序文件
             logger.info("Clean Old Files");
@@ -74,7 +105,7 @@ public class Client {
             if (!start) {
                 return false;
             }
-            if (User32.INSTANCE.FindWindow(null, "EAP application.Client") != null) {
+            if (User32.INSTANCE.FindWindow(null, "EAP Client") != null) {
                 logger.info("Boot Program Success");
                 return true;
             }
@@ -85,5 +116,15 @@ public class Client {
             ftpClient.close();
         }
         return true;
+    }
+
+    //退出
+    public static void exit() {
+        System.exit(0);
+    }
+
+
+    public static void main(String[] args) {
+        delete("e:\\rsa.pri");
     }
 }

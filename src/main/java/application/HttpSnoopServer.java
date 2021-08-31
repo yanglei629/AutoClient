@@ -12,14 +12,20 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 
 public final class HttpSnoopServer {
-
     static final boolean SSL = System.getProperty("ssl") != null;
     static String IP = "127.0.0.1";
-    static final int PORT = Integer.parseInt(System.getProperty("port", SSL ? "8443" : "9000"));
+    static int PORT = Integer.parseInt(System.getProperty("port", SSL ? "8443" : "9000"));
+
+    EventLoopGroup bossGroup;
+    EventLoopGroup workerGroup;
 
     public void run() throws Exception {
         if (null != Main.IP) {
             IP = Main.IP;
+        }
+
+        if (0 != Main.PORT) {
+            PORT = Main.PORT;
         }
         // Configure SSL.
         final SslContext sslCtx;
@@ -31,8 +37,8 @@ public final class HttpSnoopServer {
         }
 
         // Configure the server.
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        bossGroup = new NioEventLoopGroup(1);
+        workerGroup = new NioEventLoopGroup();
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
@@ -51,5 +57,10 @@ public final class HttpSnoopServer {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
+    }
+
+    public void shutdown() {
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
     }
 }

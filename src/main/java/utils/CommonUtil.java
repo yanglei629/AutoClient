@@ -33,15 +33,13 @@ public class CommonUtil {
                     ip = addr.getHostAddress();
                     logger.info(iface.getDisplayName() + " " + ip);
 
-                    if (!ip.equals("0.0.0.0") && ip.matches("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$")) {
+                    if (!ip.equals("0.0.0.0") && ip.matches("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$") && !ip.equals("192.168.1.1") && !ip.equals("192.168.1.2")) {
                         IP = ip;
                     }
                 }
             }
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (SocketException e) {
-            e.printStackTrace();
+        } catch (Throwable e) {
+            logger.warn(e.getMessage(), e);
         }
 
         return IP;

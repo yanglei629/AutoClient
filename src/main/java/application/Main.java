@@ -3,6 +3,7 @@ package application;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import utils.CommonUtil;
+import utils.RuntimeUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,11 +14,25 @@ import java.util.Properties;
 public class Main {
     public static final Logger logger = LogManager.getLogger(Main.class);
     public static String IP;
+    public static Integer PORT = 9000;
+    public static String desktopName;
+    public static String separator;
+    public static String programPath = System.getProperty("user.home") + File.separator + "AutoClient";
+    public static String tempPath = "temp";
+
+    static final JFrame mainFrame = new JFrame();
+    static HttpSnoopServer httpSnoopServer = new HttpSnoopServer();
 
     static {
         try {
+            File directory = new File(Main.programPath);
+
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
             //读取配置文件
-            String separator = System.getProperty("file.separator");
+            separator = System.getProperty("file.separator");
             String configFile = System.getProperty("user.home") + separator + "AutoClientConfig.properties";
             File file = new File(configFile);
             if (!file.exists()) {
@@ -32,20 +47,25 @@ public class Main {
                 Main.IP = prop.getProperty("IP");
             input.close();
 
+
+            //获取计算机名
+            String computerName = RuntimeUtil.getComputerName();
+            desktopName = computerName;
             //获取本机ip
             String ip = CommonUtil.getIP();
             logger.info("IP:" + ip);
             IP = ip;
-        } catch (FileNotFoundException e) {
-            logger.warn(e.getMessage());
-        } catch (IOException e) {
+        } catch (Throwable e) {
+            if (e instanceof FileNotFoundException) {
+                logger.error("file not exists");
+            }
             logger.warn(e.getMessage());
         }
     }
 
     public static void main(String[] args) throws Exception {
         logger.info("程序启动");
-        final JFrame mainFrame = new JFrame();
+
         Panel panel = new Panel();
         mainFrame.setTitle("AutoClient");
         mainFrame.setVisible(true);
@@ -60,7 +80,7 @@ public class Main {
                         "是否退出?", "Exit",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                    System.exit(0);
+                    //System.exit(0);
                 }
             }
         });
@@ -70,6 +90,24 @@ public class Main {
         //启动服务器
         logger.info("启动服务器");
         //new application.DiscardServer(port).run();
-        new HttpSnoopServer().run();
+        startSever();
+    }
+
+
+    public static void startSever() throws Exception {
+        httpSnoopServer.run();
+    }
+
+    public static void stopSever() {
+        httpSnoopServer.shutdown();
+    }
+
+    public static void restartServer() {
+        httpSnoopServer.shutdown();
+        try {
+            httpSnoopServer.run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

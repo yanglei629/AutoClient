@@ -1,15 +1,25 @@
 package utils;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 
 public class FileUtil extends FileUtils {
-    public static boolean deleteFileOrDirectory(String path) throws IOException {
+    public static final Logger logger = LogManager.getLogger(FileUtil.class);
+
+
+    public static boolean deleteFileOrDirectory(String path) {
         File file = new File(path);
         if (file.isDirectory()) {
-            deleteDirectory(file);
+            try {
+                deleteDirectory(file);
+            } catch (IOException e) {
+                logger.error(e.getMessage(), e);
+                return false;
+            }
         } else {
             if (file.delete()) {
                 return true;
