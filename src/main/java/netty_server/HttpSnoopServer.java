@@ -1,5 +1,6 @@
-package application;
+package netty_server;
 
+import application.Main;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;

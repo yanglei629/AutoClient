@@ -32,6 +32,7 @@ public class Panel extends JPanel {
 
     public Panel() {
         setLayout(new GridBagLayout());
+        setPreferredSize(new Dimension(400, 400));
 
         update_eap.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -51,7 +52,8 @@ public class Panel extends JPanel {
         set_ip.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Main.PORT = 9001;
+                String input = JOptionPane.showInputDialog(Main.mainFrame, "请输入ip");
+                Main.IP = input;
                 Main.restartServer();
             }
         });
@@ -69,7 +71,7 @@ public class Panel extends JPanel {
         });
 
         //info
-        info_pane.setPreferredSize(new Dimension(200, 200));
+        info_pane.setPreferredSize(new Dimension(150, 150));
         info_pane.setBorder(border);
         info_pane.add(desktopNameLabel);
         info_pane.add(IPLabel);
@@ -77,7 +79,7 @@ public class Panel extends JPanel {
 
 
         //tool
-        tool_pane.setPreferredSize(new Dimension(200, 200));
+        tool_pane.setPreferredSize(new Dimension(150, 150));
         tool_pane.setBorder(border);
         tool_pane.add(update_eap);
         tool_pane.add(close_eap);
@@ -85,11 +87,11 @@ public class Panel extends JPanel {
         tool_pane.add(exit);
 
         //notify
-        notify_pane.setPreferredSize(new Dimension(200, 200));
+        notify_pane.setPreferredSize(new Dimension(150, 150));
         notify_pane.setBorder(border);
 
         //log
-        log_pane.setPreferredSize(new Dimension(200, 200));
+        log_pane.setPreferredSize(new Dimension(150, 150));
         log_pane.setBorder(border);
 
         add(info_pane, new GBC(0, 0, 1, 1).setFill(GBC.BOTH).setWeight(1, 1).setInsets(5, 0, 0, 0).setAnchor(GBC.NORTHWEST));

@@ -1,16 +1,13 @@
-package application;
+package netty_server;
 
+import application.Client;
+import application.Main;
 import bean.Action;
 import bean.Flow;
 import com.alibaba.fastjson.JSON;
 import dto.Status;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import io.netty.util.CharsetUtil;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -21,26 +18,20 @@ import java.util.*;
 
 public class DispatcherServlet {
     public static final Logger logger = LogManager.getLogger(DispatcherServlet.class);
-    private static final StringBuilder buf = new StringBuilder();
+    private static StringBuilder _buf = new StringBuilder();
     private static HashMap<String, String> _headers = new HashMap<String, String>();
     private static Map<String, List<String>> _params = new HashMap<String, List<String>>();
 
-    public static boolean dispatch(HttpRequest request, ChannelHandlerContext ctx,
-                                   LastHttpContent trailer, HashMap<String, String> headers,
-                                   Map<String, List<String>> params, byte[] bodyContent) {
+    public static Object dispatch(HttpRequest request, HashMap<String, String> headers,
+                                  Map<String, List<String>> params, StringBuilder buf, byte[] bodyContent) {
         _headers = headers;
         _params = params;
+        _buf = buf;
 
         //处理请求
         Object response = doDispatch(request, bodyContent);
 
-        //回复请求
-        if (!writeResponse(request, trailer, ctx, response)) {
-            logger.info("写回复失败");
-            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        }
-
-        return true;
+        return response;
     }
 
     public static Object doDispatch(HttpRequest request, byte[] bodyContent) {
@@ -50,23 +41,23 @@ public class DispatcherServlet {
 
         //***
         if (uri.equals("/")) {
-            buf.setLength(0);
+            _buf.setLength(0);
 
-            buf.append("WELCOME TO THE WILD WILD WEB SERVER\r\n");
-            buf.append("===================================\r\n");
+            _buf.append("WELCOME TO THE WILD WILD WEB SERVER\r\n");
+            _buf.append("===================================\r\n");
 
-            buf.append("VERSION: ").append(request.protocolVersion()).append("\r\n");
-            buf.append("HOSTNAME: ").append(HttpHeaders.getHost(request, "unknown")).append("\r\n");
-            buf.append("REQUEST_URI: ").append(request.uri()).append("\r\n\r\n");
+            _buf.append("VERSION: ").append(request.protocolVersion()).append("\r\n");
+            _buf.append("HOSTNAME: ").append(HttpHeaders.getHost(request, "unknown")).append("\r\n");
+            _buf.append("REQUEST_URI: ").append(request.uri()).append("\r\n\r\n");
 
             return "/";
         }
 
         //html
         if (uri.equals("/info")) {
-            buf.setLength(0);
+            _buf.setLength(0);
 
-            buf.append("<!DOCTYPE html>\n" +
+            _buf.append("<!DOCTYPE html>\n" +
                     "<html lang=\"en\" >\n" +
                     "<head>\n" +
                     "  <meta charset=\"UTF-8\">\n" +
@@ -104,6 +95,7 @@ public class DispatcherServlet {
         //状态
         if (uri.equals("/client/status")) {
             logger.info("query status");
+
             String status = Client.queryStatus();
             if (status.equals("ONLINE")) {
                 return new Status("ONLINE", -1);
@@ -123,6 +115,7 @@ public class DispatcherServlet {
 
         if (uri.equals("/client/start")) {
             logger.info("start program");
+
             String result = Client.start();
             if (result.equals("Success")) {
                 return new Status(-1, "开启成功");
@@ -132,11 +125,14 @@ public class DispatcherServlet {
 
         //执行脚本
         if (uri.startsWith("/client/execute")) {
+            logger.info("start script");
+
+
             String path = "";
             path = _params.get("path").get(0);
 
             if (!path.matches("^[a-zA-Z]:.*")) {
-                path = Main.programPath + File.separator + path;
+                path = Main.upload + File.separator + path;
             }
 
             logger.info("execute script:" + path);
@@ -153,6 +149,7 @@ public class DispatcherServlet {
         //传输文件
         if (uri.startsWith("/client/upload")) {
             logger.info("upload file");
+
             System.out.println(bodyContent.length);
             //创建文件
             String storagePath;
@@ -169,17 +166,16 @@ public class DispatcherServlet {
             /*if (fileName.matches("^[a-zA-Z]:.*")) {
                 storagePath = fileName;
             } else {*/
-            storagePath = Main.programPath + File.separator + fileName;
+            storagePath = Main.upload + File.separator + fileName;
             //}
 
             logger.info(storagePath);
             try {
                 File file = new File(storagePath);
-                if (!file.exists()) {
-                    file.createNewFile();
-                } else {
-                    return new Status(0, "文件已经存在");
+                if (file.exists()) {
+                    file.delete();
                 }
+                file.createNewFile();
                 os = new FileOutputStream(file);
                 os.write(bodyContent);
                 os.flush();
@@ -187,7 +183,9 @@ public class DispatcherServlet {
                 exception.printStackTrace();
             } finally {
                 try {
-                    os.close();
+                    if (null != os) {
+                        os.close();
+                    }
                 } catch (IOException exception) {
                     exception.printStackTrace();
                 }
@@ -201,9 +199,9 @@ public class DispatcherServlet {
             logger.info("update program");
             boolean update = Client.update();
             if (update) {
-                buf.append("RESPONSE: " + "更新成功\r\n");
+                _buf.append("RESPONSE: " + "更新成功\r\n");
             } else {
-                buf.append("RESPONSE: " + "更新失败\r\n");
+                _buf.append("RESPONSE: " + "更新失败\r\n");
             }
         }
 
@@ -219,74 +217,6 @@ public class DispatcherServlet {
             return null;
         }
 
-
         return null;
-    }
-
-
-    private static boolean writeResponse(HttpRequest request, HttpObject currentObj, ChannelHandlerContext ctx, Object res) {
-        // Decide whether to close the connection or not.
-        boolean keepAlive = HttpHeaders.isKeepAlive(request);
-        // Build the response object.
-        //FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, currentObj.decoderResult().isSuccess() ? HttpResponseStatus.OK : HttpResponseStatus.BAD_REQUEST);
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-
-        //text/plain
-        if ("/".equals(res)) {
-            response = new DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1, currentObj.decoderResult().isSuccess() ? HttpResponseStatus.OK : HttpResponseStatus.BAD_REQUEST,
-                    Unpooled.copiedBuffer(buf.toString(), CharsetUtil.UTF_8));
-
-            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
-        }
-
-        //text/html
-        if ("info".equals(res)) {
-            response = new DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1, currentObj.decoderResult().isSuccess() ? HttpResponseStatus.OK : HttpResponseStatus.BAD_REQUEST,
-                    Unpooled.copiedBuffer(buf.toString(), CharsetUtil.UTF_8));
-
-            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
-        }
-
-        //application/json
-        if (res instanceof Status) {
-            response = new DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1, currentObj.decoderResult().isSuccess() ? HttpResponseStatus.OK : HttpResponseStatus.BAD_REQUEST,
-                    Unpooled.wrappedBuffer(JSON.toJSONBytes(res)));
-
-            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json;charset=UTF-8");
-        }
-
-
-        if (keepAlive) {
-            // Add 'Content-Length' header only for a keep-alive connection.
-            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
-            // Add keep alive header as per:
-            // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
-            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-        }
-
-        //设置cookie
-        // Encode the cookie.
-        String cookieString = request.headers().get(HttpHeaderNames.COOKIE);
-        if (cookieString != null) {
-            Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookieString);
-            if (!cookies.isEmpty()) {
-                // Reset the cookies if necessary.
-                for (io.netty.handler.codec.http.cookie.Cookie cookie : cookies) {
-                    response.headers().add(HttpHeaderNames.SET_COOKIE, io.netty.handler.codec.http.cookie.ServerCookieEncoder.LAX.encode(cookie));
-                }
-            }
-        } else {
-            // Browser sent no cookie.  Add some.
-            response.headers().add(HttpHeaderNames.SET_COOKIE, io.netty.handler.codec.http.cookie.ServerCookieEncoder.LAX.encode("key1", "value1"));
-            response.headers().add(HttpHeaderNames.SET_COOKIE, io.netty.handler.codec.http.cookie.ServerCookieEncoder.LAX.encode("key2", "value2"));
-        }
-
-        // Write the response.
-        ctx.write(response);
-
-        return keepAlive;
     }
 }

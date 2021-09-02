@@ -11,6 +11,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
 public class Client {
+    public String name;
+    public String IP;
+    public int PORT;
     public static final Logger logger = LogManager.getLogger(Client.class);
 
     //状态

@@ -21,4 +21,6 @@ public interface Kernel32 extends Library, WinNT, Wincon {
     boolean CloseHandle(PointerType hFile);
 
     HANDLE GetProcessHandleFromHwnd(HWND hWnd);
+
+    int GetCurrentProcessId();
 }

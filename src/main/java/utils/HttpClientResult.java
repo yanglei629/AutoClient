@@ -1,4 +1,4 @@
-package application;
+package utils;
 
 import java.io.Serializable;
 
@@ -43,6 +43,6 @@ public class HttpClientResult implements Serializable {
 
     @Override
     public String toString() {
-        return "application.HttpClientResult [code=" + code + ", content=" + content + "]";
+        return "HttpClientResult [code=" + code + ", content=" + content + "]";
     }
 }

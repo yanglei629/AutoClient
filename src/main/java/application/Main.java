@@ -1,9 +1,10 @@
 package application;
 
+import com.alibaba.fastjson.JSON;
+import netty_server.HttpSnoopServer;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import utils.CommonUtil;
-import utils.RuntimeUtil;
+import utils.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,16 +20,22 @@ public class Main {
     public static String separator;
     public static String programPath = System.getProperty("user.home") + File.separator + "AutoClient";
     public static String tempPath = "temp";
+    public static String upload = "upload";
 
     static final JFrame mainFrame = new JFrame();
     static HttpSnoopServer httpSnoopServer = new HttpSnoopServer();
 
     static {
         try {
+            //创建程序所需目录
             File directory = new File(Main.programPath);
+            File upload_dir = new File(Main.upload);
 
             if (!directory.exists()) {
                 directory.mkdirs();
+            }
+            if (!upload_dir.exists()) {
+                upload_dir.mkdirs();
             }
 
             //读取配置文件
@@ -51,9 +58,11 @@ public class Main {
             //获取计算机名
             String computerName = RuntimeUtil.getComputerName();
             desktopName = computerName;
+
             //获取本机ip
             String ip = CommonUtil.getIP();
             logger.info("IP:" + ip);
+            logger.info("ProcessId:" + Kernel32.INSTANCE.GetCurrentProcessId());
             IP = ip;
         } catch (Throwable e) {
             if (e instanceof FileNotFoundException) {
@@ -81,6 +90,12 @@ public class Main {
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
                     //System.exit(0);
+                    String pass = JOptionPane.showInputDialog(Main.mainFrame, "请输入密码", "");
+                    if (pass.equals("12345")) {
+                        System.exit(0);
+                    } else {
+                        JOptionPane.showMessageDialog(Main.mainFrame, "密码错误!");
+                    }
                 }
             }
         });
@@ -89,7 +104,10 @@ public class Main {
 
         //启动服务器
         logger.info("启动服务器");
-        //new application.DiscardServer(port).run();
+        Client client = new Client();
+        client.name = desktopName;
+        client.IP = IP;
+        new Thread(new HeartBeat(client)).start();
         startSever();
     }
 
@@ -98,7 +116,7 @@ public class Main {
         httpSnoopServer.run();
     }
 
-    public static void stopSever() {
+    public static void stopServer() {
         httpSnoopServer.shutdown();
     }
 

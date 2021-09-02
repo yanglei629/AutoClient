@@ -1,5 +1,5 @@
-import application.HttpClientResult;
-import application.HttpClientUtil;
+import utils.HttpClientResult;
+import utils.HttpClientUtil;
 
 public class HttpClientTest {
     public static void main(String[] args) throws Exception {
